@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>玉兔吃月饼</title>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			body {
+				background: #CCCCCC;
+			}
+			
+			#mycanvas {
+				background: #fff;
+			}
+			
+			#box {
+				position: relative;
+				margin: 0 auto;
+				width: 320px;
+				height: 500px;
+			}
+			
+			#imgs {
+				display: none;
+			}
+			
+			#stop {
+				position: absolute;
+				left: 20px;
+				top: 20px;
+				background: orangered;
+				padding: 5px;
+				border-radius: 20px;
+				color: wheat;
+				display: none;
+			}
+		</style>
+
+		<script>
+			window.onload = function() {
+
+				var canvas = document.getElementById("mycanvas");
+
+				var pen = canvas.getContext("2d");
+
+				var shouye = document.getElementById("shouye");
+				
+				var bg = document.getElementById("bg");
+				var stop = document.getElementById("stop");
+				var food1 = document.getElementById("food1");
+				var food2 = document.getElementById("food2");
+				var heart = document.getElementById("heart");
+				var scorebg = document.getElementById("scorebg");
+				var player = document.getElementById("player");
+				
+				pen.drawImage(shouye,0,0);
+				pen.fillStyle="#C5C5C5";
+				pen.font="36px Arial";
+				pen.fillText("进击的兔子",70,200);
+				pen.closePath();
+				
+				pen.beginPath();
+				pen.fillStyle="#FF4500";
+				pen.font="24px Arial";
+				pen.fillText("点击屏幕任意位置开始游戏",10,280);
+
+				canvas.onmousedown=function(){
+					game();
+				}
+				
+				function game(){
+					//显示暂停键
+					stop.style.display='block';
+					var total = 0; //分数
+					var timer1, timer2,timer4; //添加月饼和整个背景移动定时器
+					var timer3; //添加子弹定时器
+					//初始化兔子位置
+					var playerx = 130 + 35;
+					var playery = 400 + 35;
+					//子弹数组
+					var danzu = [];
+					//月饼数组
+					var mooncakes = [];
+
+					timer1 = setInterval(function() {
+						mooncakes.push({
+							x: Math.random() * 270,
+							y: 0,
+							type: Math.floor(Math.random() * 2)
+						})
+						}, 1000);
+
+					//获取随机数
+					function getRandom(min, max) {
+						return Math.floor(Math.random() * (max - min) + min + 1);
+					}
+					var ismousedown = false;
+
+					//鼠标按下事件
+					canvas.onmousedown = function() {
+							console.log("鼠标按下");
+							ismousedown = true;
+							timer3 = setInterval(function() {
+								danzu.push({
+									x: playerx,
+									y: playery - 40,
+									r: 8,
+									color: "rgb(" + getRandom(0, 255) + "," + getRandom(0, 255) + "," + getRandom(0, 255) + ")"
+								})
+							}, 400);
+						}
+						//鼠标移动事件
+					canvas.onmousemove = function(e) {
+							if (ismousedown) {
+								//解决鼠标箭头在player之外的地方鼠标点击事件
+								if (e.offsetX > playerx - 35 && e.offsetX < playerx + 35 && e.offsetY > playery - 35 && e.offsetY < playery + 35) {
+									playerx = e.offsetX;
+									playery = e.offsetY;
+									console.log("mouse move:x=" + playerx + ",y=" + playery);
+								}
+								//解决player图片超出画布的部分变为不能超出
+								if (playerx <= 35) {
+									playerx = 35;
+								} else if (playerx >= 285) {
+									playerx = 285;
+								}
+								if (playery <= 35) {
+									playery = 35;
+								} else if (playery >= 470) {
+									playery = 470;
+								}
+							}
+						}
+						//鼠标释放事件
+					canvas.onmouseup = function() {
+						console.log("鼠标释放");
+						ismousedown = false;
+						
+						clearInterval(timer3);
+					}
+
+					//加载游戏背景,从上往下滑动					
+					var bgy = -(1126 - 500);
+					var food1y = 0;
+					var food2y = 0;
+					var food1x = Math.random() * 270;
+					var food2x = Math.random() * 270;
+	
+					function getY() {
+						if (bgy >= 500) {
+							bgy = -(1126 - 500);
+						}
+						//背景滑动
+						bgy = bgy + 5;
+						pen.drawImage(bg, 0, bgy);
+						pen.drawImage(bg, 0, bgy - 1126);
+						pen.drawImage(scorebg, 140, 0);
+						pen.drawImage(heart, 144, 5);
+						pen.lineWidth = 2;
+						pen.fillStyle = "red";
+						pen.font = "24px Arial";
+						pen.fillText("得分：" + total, 210, 40);
+						pen.drawImage(player, playerx - 35, playery - 35, 70, 70);
+											
+						if (danzu.length > 0) {
+							for (var m = 0; m < danzu.length; m++) {
+								pen.beginPath();
+								pen.arc(danzu[m].x, danzu[m].y, danzu[m].r, 0, Math.PI * 2);
+								pen.fillStyle = danzu[m].color;
+								pen.fill();
+								danzu[m].y = danzu[m].y - 4;
+							}
+							//删除子弹
+							for (var n = 0; n < danzu.length; n++) {
+								if (danzu[n].y < 0) {
+									danzu.splice(n, 1);
+								}
+								for (var i = 0; i < danzu.length; i++) {
+									for (var j = 0; j < mooncakes.length; j++) {
+										if (mooncakes[j].x + 50 > danzu[i].x && danzu[i].x + 10 > mooncakes[j].x && mooncakes[j].y + 50 > danzu[i].y && danzu[i].y + 10 > mooncakes[j].y) {
+											if (mooncakes[j].type == 0) { //子弹消除五仁月饼分数加1
+												//设置月饼到画布外消除月饼
+												mooncakes[j].y = 600;
+												total = total + 1;
+												mooncakes.splice(j, 1);
+												
+												danzu[i].y = -100;
+											}
+										}
+									}
+								}
+							}
+						}
+						console.log("子弹个数：" + danzu.length);
+						//画月饼
+						console.log("月饼个数：" + mooncakes.length);
+						if (mooncakes.length > 0) {
+							for (var i = 0; i < mooncakes.length; i++) {
+								if (mooncakes[i].type == 0) { //五仁月饼
+									pen.drawImage(food1, mooncakes[i].x, mooncakes[i].y, 50, 50);
+									mooncakes[i].y = mooncakes[i].y + 1;
+								} else { //花月饼
+									pen.drawImage(food2, mooncakes[i].x, mooncakes[i].y, 50, 50);
+									mooncakes[i].y = mooncakes[i].y + 2;
+								}
+								if (mooncakes[i].y >= 300) {
+									mooncakes[i].y = mooncakes[i].y + 6;
+								}
+								//分数超过30，增加速度即增加游戏难度
+								if(total>30){
+									mooncakes[i].y = mooncakes[i].y + 4;
+								}
+							}
+							//删除月饼
+							for (var j = 0; j < mooncakes.length; j++) {
+								if (mooncakes[j].y > 500) {
+									mooncakes.splice(j, 1);
+								}
+							}
+							for (var i = 0; i < mooncakes.length; i++) {
+								if (mooncakes[i].x + 75 > playerx && playerx + 25 > mooncakes[i].x && mooncakes[i].y + 75 > playery && playery + 25 > mooncakes[i].y) {
+									if (mooncakes[i].type == 0) {
+										//设置月饼到画布外消除月饼
+										mooncakes[i].y = 600;
+										//清除事件
+										clearInterval(timer1);
+										clearInterval(timer2);
+										clearInterval(timer3);
+										pen.lineWidth = 5;
+										pen.fillStyle = "red";
+										pen.font = "48px Arial";
+										pen.fillText("游戏结束", 60, 240);
+										pen.fillText("得分：" + total, 60, 300);
+										//设置重新开始游戏，得分初始化为0；
+										stop.innerHTML = "重新开始";
+										total = 0;
+									} else { //兔子消除花月饼分数加1
+										mooncakes[i].y = 600;
+										total = total + 1;
+										
+										mooncakes.splice(i, 1);
+									}
+								}
+								//五仁月饼在一定距离内追击兔子
+								else if(mooncakes[i].x + 180 > playerx && playerx + 135 > mooncakes[i].x && mooncakes[i].y + 175 > playery && playery + 135 > mooncakes[i].y){
+									if (mooncakes[i].type == 0) {
+										if(mooncakes[i].x<playerx&&mooncakes[i].y<playery){
+											mooncakes[i].x=mooncakes[i].x+5;
+											mooncakes[i].y=mooncakes[i].y+5;
+										}else if(mooncakes[i].x<playerx&&mooncakes[i].y>playery){
+											mooncakes[i].x=mooncakes[i].x+5;
+											mooncakes[i].y=mooncakes[i].y-5;
+										}else if(mooncakes[i].x>playerx&&mooncakes[i].y>playery){
+											mooncakes[i].x=mooncakes[i].x-5;
+											mooncakes[i].y=mooncakes[i].y-5;
+										}else if(mooncakes[i].x>playerx&&mooncakes[i].y<playery){
+											mooncakes[i].x=mooncakes[i].x-5;
+											mooncakes[i].y=mooncakes[i].y+5;
+										}					
+									}
+								}
+								
+							}
+						}
+	
+					}
+					
+					timer2 = setInterval(getY, 40);
+					//设置暂停点击事件
+					stop.onclick = function() {
+						if (stop.innerHTML == "暂停") {
+							stop.innerHTML = "开始";
+							clearInterval(timer2);
+							clearInterval(timer1);
+							clearInterval(timer3);
+						} else if (stop.innerHTML == "开始") {
+							stop.innerHTML = "暂停";
+							timer2 = setInterval(getY, 40);
+							timer1 = setInterval(function() {
+								mooncakes.push({
+									x: Math.random() * 270,
+									y: 0,
+									type: Math.floor(Math.random() * 2)
+								});
+							}, 1000);
+						} else if (stop.innerHTML == "重新开始") {
+							window.location.reload();
+						}
+					}
+				}
+			}
+		</script>
+	</head>
+
+	<body>
+		<div id="box">
+			<canvas id="mycanvas" width="320" height="500">
+				您的浏览器不支持canvas，请升级你的浏览器，<a href="http://www.baidu.com">百度</a>
+			</canvas>
+			<button type="button" id="stop" value="暂停">暂停</button>
+		</div>
+		<div id="imgs">
+			<img src="img/bg.jpg" id="shouye" />
+			<img src="img/bg.jpg" alt="" id="bg" />
+			<img src="img/food1.png" alt="" id="food1" />
+			<img src="img/food2.png" alt="" id="food2" />
+			<img src="img/heart.png" alt="" id="heart" />
+			<img src="img/scorebg.png" alt="" id="scorebg" />
+			<img src="img/player.png" alt="" id="player" />
+		</div>
+	</body>
+
+</html>
